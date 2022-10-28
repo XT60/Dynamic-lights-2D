@@ -78,6 +78,7 @@ class light_handling:
         self.polygon.clear()
         sorted_points = sortedcontainers.SortedList(key = lambda x: x[0])            # [angle, point]
 
+        #---------------------------------<<< 1 >>>---------------------------------
         ### filling sorted_points
         for pos in self.points:
             point = self.points[pos]
@@ -93,6 +94,7 @@ class light_handling:
         curr_walls = set()
         top_wall = None
 
+        #---------------------------------<<< 2 >>>---------------------------------
         ### checking how many walls are in curr_walls at start
         angle = -math.pi
         vec1 = (self.radius * math.cos(angle), self.radius * math.sin(angle))                       # vector from mouse_button to edge end_point
@@ -114,7 +116,7 @@ class light_handling:
                         top_wall = wall
         self.polygon.append(round2(closest_point))
                 
-
+        #---------------------------------<<< 3 >>>---------------------------------
         for angle, point in sorted_points:
             new_buffer = set()                  # set of lately added points
             rm_buffer = set()                   # set of walls to remove before next iteration
@@ -133,9 +135,9 @@ class light_handling:
             min_dist = Infinity
             closest_point = None
             closest_wall = None
-            vec1 = (self.radius * math.cos(angle), self.radius * math.sin(angle))     # vector from mouse_button to edge end_point
+            vec1 = (self.radius * math.cos(angle), self.radius * math.sin(angle))                    # vector from mouse_button to edge end_point
             for wall in curr_walls:
-                vec2 = (wall.end_pos[0] - wall.start_pos[0], wall.end_pos[1] - wall.start_pos[1])                # vector from edge_start to edge_end
+                vec2 = (wall.end_pos[0] - wall.start_pos[0], wall.end_pos[1] - wall.start_pos[1])    # vector from edge_start to edge_end
                 den = vec1[0] * vec2[1] - vec2[0] * vec1[1]
                 if den != 0:
                     s = round((vec1[1] * (wall.start_pos[0] - self.mouse_pos[0]) - vec1[0] * (wall.start_pos[1] - self.mouse_pos[1])) / den, 5)

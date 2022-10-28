@@ -6,7 +6,7 @@ import light_handling
 
 win = pygame.display.set_mode(Config.WINDOW_SIZE)
 clock = pygame.time.Clock()
-map = tile_map.tile_map()
+map = tile_map.Tile_map()
 light = light_handling.light_handling(map.walls, map.points)
 
 flag = True
