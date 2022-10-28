@@ -1,34 +1,42 @@
-from vector_arithmetic import *
-ZERO_TOLERANCE = 1e-15
+import vector_arithmetic as va
+import compare_operators as co
+import Config
 
-def is_equal(n1, n2):
-    return abs(n1 - n2) <= 1e-12
-
-
-def is_bigger(mainPoint, pointA, pointB):
+def compare_angles(main_point, point_a, point_b):
     ''' a >? b '''
-    d = det2x2(mainPoint, pointA, pointB)
-    if d > ZERO_TOLERANCE:
-        return False
-    elif is_equal(d, 0):
-        la = square_length(substract_vec(pointA, mainPoint))
-        lb = square_length(substract_vec(pointB, mainPoint))
-        if la > lb:
-            return False 
-        return True
-    return True
+    # if they all lay on the same horizontal axis 
+    if main_point[1] == point_a[1] == point_b[1]:
+        return point_a[0] < point_b[0]
+
+    # if they both lay below main_point or above 
+    if (point_a[1] > main_point[1] and point_b[1] > main_point[1]) or \
+        (point_a[1] < main_point[1] and point_b[1] < main_point[1]):        
+        det = det2x2(main_point, point_a, point_b)
+        return det > 0     
+    
+    return point_a[1] > point_b[1] 
+    
+
+
+# def is_on_left(line_point_a, line_point_b, point):
+#     det = det2x2(line_point_a, line_point_b, point)
+#     if co.is_zero(det, 0):
+#         return None
+#     if det > 0:
+#         return True
+#     return False
 
 
 def det2x2(lineA, lineB, pointC):    #2x2
     return (lineA[0] - pointC[0]) * (lineB[1] - pointC[1]) - (lineA[1] - pointC[1]) * (lineB[0] - pointC[0])
 
 
-def sort_by_angle(points, mainPoint):
+def sort_by_angle(points, main_point):
     def partition(start, end):
         pivot = points[end - 1]
         i = start
         for p in range(start, end - 1):
-            if not is_bigger(mainPoint, points[p], pivot):
+            if not compare_angles(main_point, points[p], pivot):
                 points[i], points[p] = points[p], points[i] 
                 i += 1
         points[i], points[end - 1] = points[end - 1], points[i]

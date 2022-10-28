@@ -1,9 +1,15 @@
+import math
+
 def square_length(vec2d):
     return vec2d[0] * vec2d[0] + vec2d[1] * vec2d[1]
 
 
 def substract_vec(vec_a, vec_b):
     return (vec_a[0] - vec_b[0], vec_a[1] - vec_b[1])
+
+
+def add_vec(vec_a, vec_b):
+    return (vec_a[0] + vec_b[0], vec_a[1] + vec_b[1])
 
 
 def lengthten(vec2d, min_x, min_y):
@@ -22,3 +28,12 @@ def lengthten(vec2d, min_x, min_y):
         k = max(a, b)
     k += error_pillow
     return (vec2d[0] * k, vec2d[1] * k)
+
+
+def normalize(vec2d):
+    length = math.sqrt(square_length(vec2d))
+    return (vec2d[0] / length, vec2d[1] / length)
+
+
+def get_vector(from_where, to_where):
+    return (to_where[0] - from_where[0], to_where[1] - from_where[1])

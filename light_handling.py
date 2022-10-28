@@ -1,11 +1,22 @@
-from numpy import Infinity
 import pygame
 import Config
 import math
-import sortedcontainers
+import numpy as np
+from angle_sort import sort_by_angle
+from compare_operators import * 
+import vector_arithmetic as va
+
+def signum(x):
+    if x > 0:
+        return 1
+    if x < 0:
+        return -1
+    return 0
+
 
 def vector_length(vector):
     return math.sqrt(vector[0] * vector[0] + vector[1] * vector[1])
+
 
 def bin_search(sorted_list, angle, start, end):
     if start >= end:        #end not included
@@ -25,32 +36,37 @@ def bin_search(sorted_list, angle, start, end):
         else:
             return bin_search(sorted_list, angle, start, i)
         
-def find_index(sorted_points, values:list, index, starting_point):
-    ret = [None for _ in range(len(values))]
-    length = len(values)
-    for p in range(1, len(sorted_points)):
-        for i, value in enumerate(values):
-            if value != None:
-                if starting_point+p < len(sorted_points) and value == sorted_points[starting_point+p][index]:
-                    ret[i] = (starting_point+p)
-                    if length == 1:
-                        return ret
-                    else:
-                        length -= 1
-                        values[i] = None
-                if starting_point-p >= 0 and value == sorted_points[starting_point-p][index]:
-                    ret[i] = (starting_point-p)
-                    if length == 1:
-                        return ret
-                    else:
-                        length -= 1
-                        values[i] = None
 
-def round2 (arr):
-    if arr != None:
-        return tuple(map(lambda x: round(x, 2), arr))
+def light_intersection(light_source, light_vec, wall_vec, wall_anchor):
+    den = light_vec[0] * wall_vec[1] - wall_vec[0] * light_vec[1]
+    sgn = signum(den)
+    den = abs(den)
+    if not is_zero(den):
+        a = (wall_anchor[0] - light_source[0], wall_anchor[1] - light_source[1])
+        s = (light_vec[1] * (a[0]) - light_vec[0] * (a[1])) * sgn
+        t = (wall_vec[1] * (a[0]) - wall_vec[0] * (a[1])) * sgn
+        if (is_between(s, 0, den) and is_bigger(t, 0)):
+            return t / den
+    return None
 
 
+def intersect_walls(walls, light_vec, light_source, walls_collector = None):
+    min_dist = math.inf
+    closest_point = None
+    top_wall = None
+    for wall in walls:
+        wall_vec = va.get_vector(wall.start_pos, wall.end_pos)
+        dist = light_intersection(light_source, light_vec, wall_vec, wall.start_pos)
+        if dist:
+            if walls_collector != None:                 # if which wall intersect information is needed 
+                walls_collector.add(wall)
+            if dist < min_dist:                 # 
+                x = light_source[0] + (dist * light_vec[0])
+                y = light_source[1] + (dist * light_vec[1])
+                closest_point = (x, y)
+                min_dist = dist
+                top_wall = wall
+    return [min_dist, closest_point, top_wall]
 
 
 
@@ -59,11 +75,9 @@ class light_handling:
         self.walls = walls
         self.polygon = []
         self.points = points
-        self.pressed = False
         self.mouse_pos = None
         self.rays = []
         self.radius = max(Config.WINDOW_SIZE) * 2
-        #self.generate_wall_ends()
         self.multiplier = 1.5
         self.effect_size = tuple(map( lambda x: x*self.multiplier, Config.WINDOW_SIZE))
         self.light_effect = pygame.transform.scale(pygame.image.load('light_effect.png'), self.effect_size).convert() 
@@ -76,48 +90,21 @@ class light_handling:
 
     def extract_polygon(self):
         self.polygon.clear()
-        sorted_points = sortedcontainers.SortedList(key = lambda x: x[0])            # [angle, point]
-
-        #---------------------------------<<< 1 >>>---------------------------------
-        ### filling sorted_points
-        for pos in self.points:
-            point = self.points[pos]
-            vec = (pos[0] - self.mouse_pos[0], pos[1] - self.mouse_pos[1])
-            angle = math.atan2(vec[1], vec[0])
-            if abs(angle) == math.pi:
-                #sorted_points.add((-math.pi, point))
-                sorted_points.add((math.pi, point))
-            else:
-                sorted_points.add((angle, point))
-            
+        sorted_points = [ point for point in self.points]
+        sort_by_angle(sorted_points, self.mouse_pos)
 
         curr_walls = set()
         top_wall = None
 
         #---------------------------------<<< 2 >>>---------------------------------
         ### checking how many walls are in curr_walls at start
-        angle = -math.pi
-        vec1 = (self.radius * math.cos(angle), self.radius * math.sin(angle))                       # vector from mouse_button to edge end_point
-        min_dist = Infinity
-        closest_point = None
-        for wall in self.walls:
-            vec2 = (wall.end_pos[0] - wall.start_pos[0], wall.end_pos[1] - wall.start_pos[1])       # vector from edge_start to edge_end
-            den = vec1[0] * vec2[1] - vec2[0] * vec1[1]
-            if round(den, 2) != 0 and (wall.start_pos[1] < self.mouse_pos[1] or wall.end_pos[1] < self.mouse_pos[1]):
-                s = round((vec1[1] * (wall.start_pos[0] - self.mouse_pos[0]) - vec1[0] * (wall.start_pos[1] - self.mouse_pos[1])) / den, 5)
-                t = round((vec2[1] * (wall.start_pos[0] - self.mouse_pos[0]) - vec2[0] * (wall.start_pos[1] - self.mouse_pos[1])) / den, 5)
-                if (0 <= round(s, 3) <= 1 and 0 <= round(t,3) <= 1):
-                    curr_walls.add(wall)
-                    if t < min_dist:
-                        x = self.mouse_pos[0] + (t * vec1[0])
-                        y = self.mouse_pos[1] + (t * vec1[1])
-                        closest_point = (x, y)
-                        min_dist = t
-                        top_wall = wall
-        self.polygon.append(round2(closest_point))
+        start_vec = (1, 0)                       # vector that is border between sorted_points[-1] and sorted_points[0] 
+        min_dist, closest_point, closest_wall = intersect_walls(self.walls, start_vec, self.mouse_pos, curr_walls)
+        self.polygon.append(closest_point)
                 
-        #---------------------------------<<< 3 >>>---------------------------------
-        for angle, point in sorted_points:
+
+        for vertices in sorted_points:
+            point = self.points[vertices]
             new_buffer = set()                  # set of lately added points
             rm_buffer = set()                   # set of walls to remove before next iteration
 
@@ -132,84 +119,34 @@ class light_handling:
             else:
                 new_buffer.add(point.wall_start)
 
-            min_dist = Infinity
-            closest_point = None
-            closest_wall = None
-            vec1 = (self.radius * math.cos(angle), self.radius * math.sin(angle))                    # vector from mouse_button to edge end_point
-            for wall in curr_walls:
-                vec2 = (wall.end_pos[0] - wall.start_pos[0], wall.end_pos[1] - wall.start_pos[1])    # vector from edge_start to edge_end
-                den = vec1[0] * vec2[1] - vec2[0] * vec1[1]
-                if den != 0:
-                    s = round((vec1[1] * (wall.start_pos[0] - self.mouse_pos[0]) - vec1[0] * (wall.start_pos[1] - self.mouse_pos[1])) / den, 5)
-                    t = round((vec2[1] * (wall.start_pos[0] - self.mouse_pos[0]) - vec2[0] * (wall.start_pos[1] - self.mouse_pos[1])) / den, 5)
-                    if (0 <= s <= 1 and 0 <= t <= 1):
-                        if t < min_dist:
-                            x = self.mouse_pos[0] + (t * vec1[0])
-                            y = self.mouse_pos[1] + (t * vec1[1])
-                            closest_point = (x, y)
-                            min_dist = t
-                            closest_wall = wall
+            min_dist = {}
+            closest_point= {}
+            closest_wall = {}
 
-            ### new walls handling
-            n_min_dist = Infinity
-            n_closest_point = None
-            n_closest_wall = None             
-            for wall in new_buffer:
-                vec2 = (wall.end_pos[0] - wall.start_pos[0], wall.end_pos[1] - wall.start_pos[1])                # vector from edge_start to edge_end
-                den = vec1[0] * vec2[1] - vec2[0] * vec1[1]
-                if den != 0:
-                    s = round((vec1[1] * (wall.start_pos[0] - self.mouse_pos[0]) - vec1[0] * (wall.start_pos[1] - self.mouse_pos[1])) / den, 5)
-                    t = round((vec2[1] * (wall.start_pos[0] - self.mouse_pos[0]) - vec2[0] * (wall.start_pos[1] - self.mouse_pos[1])) / den, 5)
-                    if (0 <= s <= 1 and 0 <= t <= 1):
-                        if t < n_min_dist:
-                            x = self.mouse_pos[0] + (t * vec1[0])
-                            y = self.mouse_pos[1] + (t * vec1[1])
-                            n_closest_point = (x, y)
-                            n_min_dist = t
-                            n_closest_wall = wall
-
-            ### new removed handling
-            r_min_dist = Infinity
-            r_closest_point = None
-            r_closest_wall = None             
-            for wall in rm_buffer:
-                vec2 = (wall.end_pos[0] - wall.start_pos[0], wall.end_pos[1] - wall.start_pos[1])                # vector from edge_start to edge_end
-                den = vec1[0] * vec2[1] - vec2[0] * vec1[1]
-                if den != 0:
-                    s = round((vec1[1] * (wall.start_pos[0] - self.mouse_pos[0]) - vec1[0] * (wall.start_pos[1] - self.mouse_pos[1])) / den, 5)
-                    t = round((vec2[1] * (wall.start_pos[0] - self.mouse_pos[0]) - vec2[0] * (wall.start_pos[1] - self.mouse_pos[1])) / den, 5)
-                    if (0 <= s <= 1 and 0 <= t <= 1):
-                        if t < n_min_dist:
-                            x = self.mouse_pos[0] + (t * vec1[0])
-                            y = self.mouse_pos[1] + (t * vec1[1])
-                            r_closest_point = (x, y)
-                            r_min_dist = t
-                            r_closest_wall = wall
-
-            closest_point = round2(closest_point)
-            n_closest_point = round2(n_closest_point)
-            r_closest_point = round2(r_closest_point)
+            light_vec = va.normalize(va.get_vector(self.mouse_pos, vertices))
+            min_dist['curr'], closest_point['curr'], closest_wall['curr'] = intersect_walls(curr_walls, light_vec, self.mouse_pos)
+            min_dist['new'], closest_point['new'], closest_wall['new'] = intersect_walls(new_buffer, light_vec, self.mouse_pos)         
+            min_dist['rm'], closest_point['rm'], closest_wall['rm'] = intersect_walls(rm_buffer, light_vec, self.mouse_pos)              
             
-            k = min(min_dist, n_min_dist, r_min_dist)
-            if k == min_dist:
-                if top_wall != closest_wall:
-                    self.polygon.append(closest_point)
-                    top_wall = closest_wall
-            elif k == r_min_dist :   
-                self.polygon.append(r_closest_point)
-                if closest_point != None and point.wall_end in rm_buffer and point.wall_start in rm_buffer:
-                    self.polygon.append(closest_point)
-                top_wall = r_closest_wall
-            elif k == n_min_dist:
-                if closest_point != None and point.wall_end in new_buffer and point.wall_start in new_buffer:
-                    self.polygon.append(closest_point)
-                self.polygon.append(n_closest_point)
-                top_wall = n_closest_wall
+            k = min([min_dist[key] for key in min_dist])
+            
+            if is_equal(k, min_dist['rm']) :   
+                self.polygon.append(closest_point['rm'])
+                if closest_point['curr'] != None and point.wall_end in rm_buffer and point.wall_start in rm_buffer:
+                    self.polygon.append(closest_point['curr'])
+                top_wall = closest_wall['rm']
+            elif is_equal(k, min_dist['new']):
+                if closest_point['curr'] != None and point.wall_end in new_buffer and point.wall_start in new_buffer:
+                    self.polygon.append(closest_point['curr'])
+                self.polygon.append(closest_point['new'])
+                top_wall = closest_wall['new']
+            elif is_equal(k, min_dist['curr']):
+                if top_wall != closest_wall['curr']:
+                    self.polygon.append(closest_point['curr'])
+                    top_wall = closest_wall['curr']
             
             curr_walls.update(new_buffer)
             curr_walls -= rm_buffer
-        
-        #elf.polygon.append(self.polygon[0])
 
 
 

@@ -10,9 +10,9 @@ map = tile_map.Tile_map()
 light = light_handling.light_handling(map.walls, map.points)
 
 flag = True
-while flag: 
+while flag:
     clock.tick(Config.FPS)
-    
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             flag = False
@@ -24,6 +24,5 @@ while flag:
     win.fill((0,0,0))
     light.draw(win)
     map.draw(win)
-    
 
     pygame.display.update()

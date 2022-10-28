@@ -64,10 +64,21 @@ class Tile_map:
         self.clear_data_structues()
 
         # adding map borders
-        self.walls.append(Wall((0,0), (Config.WINDOW_SIZE[0], 0)))
-        self.walls.append(Wall((Config.WINDOW_SIZE[0], 0), (Config.WINDOW_SIZE[0], Config.WINDOW_SIZE[1])))
-        self.walls.append(Wall((Config.WINDOW_SIZE[0], Config.WINDOW_SIZE[1]), (0, Config.WINDOW_SIZE[1])))
-        self.walls.append(Wall((0, Config.WINDOW_SIZE[1]), (0,0)))
+        self.walls.append(Wall((Config.WINDOW_SIZE[0], 0), (0,0)))
+        self.walls.append(Wall((Config.WINDOW_SIZE[0], Config.WINDOW_SIZE[1]), (Config.WINDOW_SIZE[0], 0)))
+        self.walls.append(Wall( (0, Config.WINDOW_SIZE[1]), (Config.WINDOW_SIZE[0], Config.WINDOW_SIZE[1])))
+        self.walls.append(Wall((0,0), (0, Config.WINDOW_SIZE[1])))
+
+        # format of walls:
+        #
+        #                e             s                s - start
+        #                ---------------                e - end
+        #            s  |               |  e
+        #               |               |   
+        #               |               |
+        #            e  |               |  s
+        #                ---------------
+        #                s             e
 
         for y, row in enumerate(self.cell_map):
             for x, curr_cell in enumerate(row):
@@ -77,7 +88,7 @@ class Tile_map:
                     w = self.get_cell(x-1, y)
                     s = self.get_cell(x, y+1)
 
-                    ### NORTH CELL
+                    # North cell
                     if n != None and not n.exist:
                         curr_cell.has_wall[NORTH] = True
                         if w != None and w.has_wall[NORTH]:
@@ -90,7 +101,7 @@ class Tile_map:
                             start_y = y*Config.TILE_SIZE
                             self.walls.append(Wall((start_x + Config.TILE_SIZE, start_y), (start_x, start_y)))
                         
-                    ### EAST CELL
+                    # East cell
                     if e != None and not e.exist:
                         curr_cell.has_wall[EAST] = True
                         if n != None and n.has_wall[EAST]:
@@ -103,7 +114,7 @@ class Tile_map:
                             start_y = y*Config.TILE_SIZE
                             self.walls.append(Wall((start_x, start_y + Config.TILE_SIZE), (start_x, start_y)))
 
-                    ### WEST CELL
+                    # West cell
                     if w != None and not w.exist:
                         curr_cell.has_wall[WEST] = True
                         if n != None and n.has_wall[WEST]:
@@ -116,7 +127,7 @@ class Tile_map:
                             start_y = y*Config.TILE_SIZE
                             self.walls.append(Wall((start_x, start_y), (start_x, start_y + Config.TILE_SIZE)))
 
-                    ### SOUTH CELL
+                    # South cell
                     if s != None and not s.exist:
                         curr_cell.has_wall[SOUTH] = True
                         if w != None and w.has_wall[SOUTH]:
@@ -129,6 +140,7 @@ class Tile_map:
                             start_y = (y+1)*Config.TILE_SIZE
                             self.walls.append(Wall((start_x, start_y), (start_x + Config.TILE_SIZE, start_y)))
 
+        # formating gathered wall data to generate self.points data structure
         for wall in self.walls:
             end_pos = tuple(wall.end_pos)
             start_pos = tuple(wall.start_pos)
@@ -140,16 +152,6 @@ class Tile_map:
                 self.points[end_pos] = Point(wall_end = wall)
             else:
                 self.points[end_pos].wall_end = wall
-
-        #                e             s                s - start
-        #                ---------------                e - end
-        #             s |               | e
-        #               |               |
-        #               |               |
-        #             e |               | s
-        #                ---------------
-        #                s             e
-
 
 
     def update_variables(self, mouse_pos, mouse_pressed, light_object):
