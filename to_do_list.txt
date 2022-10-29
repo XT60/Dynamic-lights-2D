@@ -1,0 +1,27 @@
+Jak to dziala? 
+1. sortowanie punktow po kątach
+2. wypelnianie curr_walls ścianami ktore potencjalnie będą w szukanej figurze
+3. idziemy punktami względem kątów 
+    new_buffer
+    rm_buffer
+to struktury do trzymania aktualnie 'kolizyjnych' ścian 
+
+
+
+To do: 
+1. zamień sortowanie po przez kąty na sortowanie na wyznacznikach
+2. zamień obroty CW na CCW (żeby bylo bardziej intuicyjnie) 
+3. utwórz funkcje line_intersect która usunie problem powielania tego samego kodu 4 razy pod rząd...
+
+bugi:
+- najeżdżanie myszą na ściane robi divisionByZero exception w funkcji normalize()
+
+
+(dodatkowe)
+4. wprowadź reprezentacje putków jako np.array
+5. dodaj (o ile to możliwe) inteligentne usuwanie krawędzi 'przykrywanych' przez inne 
+6. ogarnąć znany problem z ukośnymi ścianami
+
+
+to recover previous changes: 
+https://stackoverflow.com/questions/19003009/how-to-recover-stashed-uncommitted-changes

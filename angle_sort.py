@@ -6,7 +6,23 @@ def compare_angles(main_point, point_a, point_b):
     ''' a >? b '''
     # if they all lay on the same horizontal axis 
     if main_point[1] == point_a[1] == point_b[1]:
+        if point_a[0] > main_point[0] and point_b[0] > main_point[0]:
+            return point_a[0] > point_b[0]
         return point_a[0] < point_b[0]
+
+    if main_point[1] == point_a[1]:
+        if main_point[0] < point_a[0]:
+            return False
+        elif main_point[1] < point_b[1]:
+            return False
+        return True
+    
+    if main_point[1] == point_b[1]:
+        if main_point[0] < point_b[0]:
+            return True
+        elif main_point[1] < point_a[1]:
+            return True
+        return False
 
     # if they both lay below main_point or above 
     if (point_a[1] > main_point[1] and point_b[1] > main_point[1]) or \
@@ -50,3 +66,4 @@ def sort_by_angle(points, main_point):
         quick_sort(pivot + 1, end)
     
     quick_sort(0, len(points))
+

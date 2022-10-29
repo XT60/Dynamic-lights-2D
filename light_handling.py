@@ -102,9 +102,10 @@ class light_handling:
         min_dist, closest_point, closest_wall = intersect_walls(self.walls, start_vec, self.mouse_pos, curr_walls)
         self.polygon.append(closest_point)
                 
+        for i in range(len(sorted_points)):
+            vertex = sorted_points[i]
+            point = self.points[vertex]
 
-        for vertices in sorted_points:
-            point = self.points[vertices]
             new_buffer = set()                  # set of lately added points
             rm_buffer = set()                   # set of walls to remove before next iteration
 
@@ -123,7 +124,7 @@ class light_handling:
             closest_point= {}
             closest_wall = {}
 
-            light_vec = va.normalize(va.get_vector(self.mouse_pos, vertices))
+            light_vec = va.normalize(va.get_vector(self.mouse_pos, vertex))
             min_dist['curr'], closest_point['curr'], closest_wall['curr'] = intersect_walls(curr_walls, light_vec, self.mouse_pos)
             min_dist['new'], closest_point['new'], closest_wall['new'] = intersect_walls(new_buffer, light_vec, self.mouse_pos)         
             min_dist['rm'], closest_point['rm'], closest_wall['rm'] = intersect_walls(rm_buffer, light_vec, self.mouse_pos)              
@@ -147,16 +148,19 @@ class light_handling:
             
             curr_walls.update(new_buffer)
             curr_walls -= rm_buffer
+        # print(self.polygon)
+        # print(self.mouse_pos)
 
 
 
     def update_variables(self, mouse_pos, mouse_pressed):
         if mouse_pressed[0]:
-            #self.mouse_pos = (800, 300)
             self.mouse_pos = mouse_pos
+            self.mouse_pos = (592, 300)
             self.extract_polygon()
         else:
             self.mouse_pos = None
+        
 
 
     def draw(self, surface: pygame.Surface):
