@@ -26,7 +26,7 @@ class Point:
 
 class Tile_map:
     def __init__(self) -> None:
-        self.walls = []    
+        self.walls = []         # just list of Wall objects
         self.points = {}        # {pos : point}     
         self.cell_map = self.convert_to_cell_map(Config.TILEMAP)
         self.extract_walls()

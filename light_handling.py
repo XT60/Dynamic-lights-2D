@@ -1,7 +1,6 @@
 import pygame
 import Config
 import math
-import numpy as np
 from angle_sort import sort_by_angle
 from compare_operators import * 
 import vector_arithmetic as va

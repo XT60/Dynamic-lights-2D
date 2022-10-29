@@ -1,7 +1,3 @@
-import vector_arithmetic as va
-import compare_operators as co
-import Config
-
 def compare_angles(main_point, point_a, point_b):
     ''' a >? b '''
     # if they all lay on the same horizontal axis as main_point
@@ -36,11 +32,13 @@ def compare_angles(main_point, point_a, point_b):
     return point_a[1] > point_b[1] 
     
 
-def det2x2(lineA, lineB, pointC):    #2x2
+def det2x2(lineA, lineB, pointC):
+    '''2x2 matrix determinant that determines how pointC lays relative to line from lineA to lineB ( >0 -> left; <0 -> right, ==0 collinear)'''
     return (lineA[0] - pointC[0]) * (lineB[1] - pointC[1]) - (lineA[1] - pointC[1]) * (lineB[0] - pointC[0])
 
 
 def sort_by_angle(points, main_point):
+    '''Quicksort algorithm modified to sort by angle relative to main_point'''
     def partition(start, end):
         pivot = points[end - 1]
         i = start
