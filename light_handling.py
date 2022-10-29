@@ -13,31 +13,9 @@ def signum(x):
         return -1
     return 0
 
-
-def vector_length(vector):
-    return math.sqrt(vector[0] * vector[0] + vector[1] * vector[1])
-
-
-def bin_search(sorted_list, angle, start, end):
-    if start >= end:        #end not included
-        return None
-    else:
-        i = (start + end)//2
-        if angle == sorted_list[i]:
-            j = i
-            while sorted_list[i] == angle and i > 0:
-                i -= 1 
-            while sorted_list[j] == angle and j < len(sorted_list):
-                j += 1
-            return (i+1, j)
-            
-        elif angle > sorted_list[i]:
-            return bin_search(sorted_list, angle, i + 1, end)
-        else:
-            return bin_search(sorted_list, angle, start, i)
         
-
 def light_intersection(light_source, light_vec, wall_vec, wall_anchor):
+    '''finds intersection point between light and wall'''
     den = light_vec[0] * wall_vec[1] - wall_vec[0] * light_vec[1]
     sgn = signum(den)
     den = abs(den)
@@ -51,6 +29,7 @@ def light_intersection(light_source, light_vec, wall_vec, wall_anchor):
 
 
 def intersect_walls(walls, light_vec, light_source, walls_collector = None):
+    ''' finds closest light intersection with given walls'''
     min_dist = math.inf
     closest_point = None
     top_wall = None
@@ -58,9 +37,9 @@ def intersect_walls(walls, light_vec, light_source, walls_collector = None):
         wall_vec = va.get_vector(wall.start_pos, wall.end_pos)
         dist = light_intersection(light_source, light_vec, wall_vec, wall.start_pos)
         if dist:
-            if walls_collector != None:                 # if which wall intersect information is needed 
+            if walls_collector != None:
                 walls_collector.add(wall)
-            if dist < min_dist:                 # 
+            if dist < min_dist:
                 x = light_source[0] + (dist * light_vec[0])
                 y = light_source[1] + (dist * light_vec[1])
                 closest_point = (x, y)
@@ -90,35 +69,39 @@ class light_handling:
 
     def extract_polygon(self):
         self.polygon.clear()
+
+        # sorting points by angle relative to current mouse position
         sorted_points = [ point for point in self.points]
         sort_by_angle(sorted_points, self.mouse_pos)
 
         curr_walls = set()
         top_wall = None
 
-        #---------------------------------<<< 2 >>>---------------------------------
-        ### checking how many walls are in curr_walls at start
-        start_vec = (1, 0)                       # vector that is border between sorted_points[-1] and sorted_points[0] 
-        min_dist, closest_point, closest_wall = intersect_walls(self.walls, start_vec, self.mouse_pos, curr_walls)
+        # finds walls that should be in curr_walls at start
+        start_vec = (1, 0)
+        collide_walls = set()
+        min_dist, closest_point, closest_wall = intersect_walls(self.walls, start_vec, self.mouse_pos, collide_walls)
+        for wall in collide_walls:
+            if wall.start_pos[1] < self.mouse_pos[1] or wall.end_pos[1] < self.mouse_pos[1]:
+                curr_walls.add(wall)
+
+        # finds first intersection point
+        min_dist, closest_point, closest_wall = intersect_walls(curr_walls, start_vec, self.mouse_pos)
+        top_wall = closest_wall
         self.polygon.append(closest_point)
-                
-        for i in range(len(sorted_points)):
-            vertex = sorted_points[i]
+
+        for vertex in sorted_points:
             point = self.points[vertex]
+            new_buffer = set()                  # set of walls added in current iteration
+            rm_buffer = set()                   # set of walls that will be removed in next iteration
 
-            new_buffer = set()                  # set of lately added points
-            rm_buffer = set()                   # set of walls to remove before next iteration
-
-            if point.wall_end in curr_walls:
-                curr_walls.remove(point.wall_end)
-                rm_buffer.add(point.wall_end)
-            else:
-                new_buffer.add(point.wall_end)
-            if point.wall_start in curr_walls:
-                curr_walls.remove(point.wall_start)
-                rm_buffer.add(point.wall_start)
-            else:
-                new_buffer.add(point.wall_start)
+            for wall in (point.wall_end, point.wall_start):
+                if wall:
+                    if wall in curr_walls:
+                        curr_walls.remove(wall)
+                        rm_buffer.add(wall)
+                    else:
+                        new_buffer.add(wall)
 
             min_dist = {}
             closest_point= {}
@@ -136,11 +119,13 @@ class light_handling:
                 if closest_point['curr'] != None and point.wall_end in rm_buffer and point.wall_start in rm_buffer:
                     self.polygon.append(closest_point['curr'])
                 top_wall = closest_wall['rm']
+
             elif is_equal(k, min_dist['new']):
                 if closest_point['curr'] != None and point.wall_end in new_buffer and point.wall_start in new_buffer:
                     self.polygon.append(closest_point['curr'])
                 self.polygon.append(closest_point['new'])
                 top_wall = closest_wall['new']
+
             elif is_equal(k, min_dist['curr']):
                 if top_wall != closest_wall['curr']:
                     self.polygon.append(closest_point['curr'])
@@ -148,25 +133,17 @@ class light_handling:
             
             curr_walls.update(new_buffer)
             curr_walls -= rm_buffer
-        # print(self.polygon)
-        # print(self.mouse_pos)
-
 
 
     def update_variables(self, mouse_pos, mouse_pressed):
         if mouse_pressed[0]:
             self.mouse_pos = mouse_pos
-            self.mouse_pos = (592, 300)
             self.extract_polygon()
         else:
             self.mouse_pos = None
         
 
-
     def draw(self, surface: pygame.Surface):
-        # if self.mouse_pos != None:
-        #     pygame.draw.polygon(surface, (200,100,0), self.polygon)
-
         if self.mouse_pos != None:
             new_surface = pygame.Surface(Config.WINDOW_SIZE)
             new_surface.fill((0,0,0))
