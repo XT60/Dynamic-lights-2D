@@ -32,6 +32,8 @@ def lengthten(vec2d, min_x, min_y):
 
 def normalize(vec2d):
     length = math.sqrt(square_length(vec2d))
+    if length == 0:
+        return (0, 0)
     return (vec2d[0] / length, vec2d[1] / length)
 
 

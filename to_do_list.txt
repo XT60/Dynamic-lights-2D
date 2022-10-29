@@ -8,10 +8,13 @@ to struktury do trzymania aktualnie 'kolizyjnych' ścian
 
 
 
-To do: 
+Done:
 1. zamień sortowanie po przez kąty na sortowanie na wyznacznikach
 2. zamień obroty CW na CCW (żeby bylo bardziej intuicyjnie) 
 3. utwórz funkcje line_intersect która usunie problem powielania tego samego kodu 4 razy pod rząd...
+
+To do: 
+6. ogarnąć znany problem z ukośnymi ścianami
 
 bugi:
 - najeżdżanie myszą na ściane robi divisionByZero exception w funkcji normalize()
@@ -20,8 +23,7 @@ bugi:
 (dodatkowe)
 4. wprowadź reprezentacje putków jako np.array
 5. dodaj (o ile to możliwe) inteligentne usuwanie krawędzi 'przykrywanych' przez inne 
-6. ogarnąć znany problem z ukośnymi ścianami
-
+7. optimalisation
 
 to recover previous changes: 
 https://stackoverflow.com/questions/19003009/how-to-recover-stashed-uncommitted-changes

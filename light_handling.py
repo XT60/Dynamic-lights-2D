@@ -12,7 +12,11 @@ def signum(x):
         return -1
     return 0
 
+
+def clamp(x_val, min_val, max_val):
+    return max(min_val, min(max_val, x_val))
         
+
 def light_intersection(light_source, light_vec, wall_vec, wall_anchor):
     '''finds intersection point between light and wall'''
     den = light_vec[0] * wall_vec[1] - wall_vec[0] * light_vec[1]
@@ -136,7 +140,8 @@ class light_handling:
 
     def update_variables(self, mouse_pos, mouse_pressed):
         if mouse_pressed[0]:
-            self.mouse_pos = mouse_pos
+            self.mouse_pos = (clamp(mouse_pos[0], Config.BORDER_BLOCK, Config.WINDOW_SIZE[0] - Config.BORDER_BLOCK),
+             clamp(mouse_pos[1], Config.BORDER_BLOCK, Config.WINDOW_SIZE[1] - Config.BORDER_BLOCK))
             self.extract_polygon()
         else:
             self.mouse_pos = None
