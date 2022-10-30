@@ -44,13 +44,23 @@ Actions you can take are:
 
 
 ## ⏱️ Code performance
-Python is not the first language that comes to mind when thinking about performance but the methodology presented in code is fast, at least fast enough to handle over 500 walls.
+Python is not the first language that comes to mind when thinking about performance but the methodology presented in code is quite fast. I am still working on optimising it even further. Right now it can easily handle around 200 walls. After exceeding that number it gets laggy but is still usable up to 700 ish, depending on the structure of shapes.
 
 
 ## 📚 More info
 - https://www.youtube.com/watch?v=fc3nnG2CG8U
 - https://ncase.me/sight-and-light/
 - https://www.redblobgames.com/articles/visibility/
+
+
+## 🛠️ How is it different from classic solution?
+Well, firstly, what I was trying to accomplish was to cast as little rays and create a polygon with as little vertices as possible. So at the beginning of the main polygon-extracting function I sort all the points by an angle relative to the current mouse position. In the v1 version I changed it a little by not directly calculating angles with the trigonometric functions and instead using the matrix determinant to determine the point's order. After sorting I calculate how many walls intersect with the light ray at the relative 0 angle, so that while iterating through points I can keep walls that currently can be intersected by the light ray and not applying the line intersection algorithm to every wall. Also, while iterating I keep a top_wall value that represents wall that was the closest in latest iteration, this way I can reduce amount of points to minimum by placing exactly 2 (start and end of section) points on every wall that appears in the solution except the first wall in the solution.
+So in short:
+- sorting points by angle (retrieved by matrix determinant)
+- iterating through sorted points and for each casting a ray
+- not checking walls that will surely not intersect with the light ray
+- minimising amount of vertices that solution contains of
+
 
 ### 🚩 Problems
 The downside to this solution is that in the current state it doesn't properly handle ray casting on contact the point of two squares placed diagonally. 
