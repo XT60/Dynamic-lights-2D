@@ -59,7 +59,7 @@ So inn short:
 - sorting points by angle (retrieved by matrix determinant)
 - iterating through sorted points and for each casting a ray
 - not checking walls that will surely not intersect with the light ray
-- minimising amount of vertices that polygon contains of -> exacly 2 points for every wall which part is included (except begining wall)
+- minimising amount of vertices that solution contains of
 For more insight I recomment checking my code yourself :)
 
 
