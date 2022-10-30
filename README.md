@@ -9,7 +9,6 @@ Eventually, I gathered enough ideas to write my own version and this is the resu
 ## 💻 Technologies used
 - [![python 3.10.6](https://img.shields.io/badge/python-3.10.6-blue)](https://www.python.org/)
 - [![pygame 2.1.2](https://img.shields.io/badge/pygame-2.1.2-green)](https://www.pygame.org/wiki/about)
-- [![sortedcontainers 2.4.0](https://img.shields.io/badge/sortedcontainters-2.4.0-orange)](https://grantjenks.com/docs/sortedcontainers)
 
 ## 🏃 How to run
 First of all, to run this code you need to have Python3 on your machine, but it doesn't end here. You also need to install all dependencies. 
@@ -44,7 +43,7 @@ Actions you can take are:
 
 
 ## ⏱️ Code performance
-Python is not the first language that comes to mind when thinking about performance but the methodology presented in code is quite fast. I am still working on optimising it even further. Right now it can easily handle around 200 walls. After exceeding that number it gets laggy but is still usable up to 700 ish, depending on the structure of shapes.
+Python is not the first language that comes to mind when thinking about performance but the methodology presented in code is quite fast. Right now it can easily handle around 200 walls. After exceeding that number it gets laggy but is still usable up to ~500, depending on the structure of shapes. I am still working on optimising it even further, so if you happend to have idea or tip how to do it I would be more than happy to hear it. 
 
 
 ## 📚 More info
@@ -61,10 +60,8 @@ So in short:
 - not checking walls that will surely not intersect with the light ray
 - minimising amount of vertices that solution contains of
 
-
-### 🚩 Problems
-The downside to this solution is that in the current state it doesn't properly handle ray casting on contact the point of two squares placed diagonally. 
-
+## 🗺️ Feedback
+If you have happen to have any feedback about the project please reach out to me. 
 <p align="center">
   <img src="https://user-images.githubusercontent.com/89086129/196006461-f1bf3621-44d8-4a37-87c0-2f2e78f4012d.png" alt="errorImg">
 </p>
