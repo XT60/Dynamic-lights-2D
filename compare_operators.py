@@ -14,3 +14,7 @@ def is_bigger(value, min_val):
 
 def is_equal(val1, val2):
     return abs(val1 - val2) < Config.ZERO_TOLERANCE
+
+
+def are_points_equal(vec1, vec2):
+    return is_equal(vec1[0], vec2[0]) and is_equal(vec1[1], vec2[1])

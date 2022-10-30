@@ -19,15 +19,14 @@ class Cell:
 
 
 class Point:
-    def __init__(self, wall_start = None, wall_end = None) -> None:
-        self.wall_start = wall_start 
-        self.wall_end = wall_end     
+    def __init__(self, *walls) -> None:
+        self.walls = list(walls) 
 
 
 class Tile_map:
     def __init__(self) -> None:
-        self.walls = []         # just list of Wall objects
-        self.points = {}        # {pos : point}     
+        self.walls = []             # just list of Wall objects
+        self.points = {}            # {pos : point}     
         self.cell_map = self.convert_to_cell_map(Config.TILEMAP)
         self.extract_walls()
 
@@ -70,16 +69,16 @@ class Tile_map:
         self.walls.append(Wall((0,0), (0, Config.WINDOW_SIZE[1])))
 
         # format of walls:
-        #
         #                e             s                s - start
-        #                ---------------                e - end
+        #                -------------->                e - end
         #            s  |               |  e
         #               |               |   
         #               |               |
-        #            e  |               |  s
-        #                ---------------
+        #            e  v               v  s
+        #                -------------->
         #                s             e
-
+        
+        additional_points = []              # the points that are needed but don't create another wall
         for y, row in enumerate(self.cell_map):
             for x, curr_cell in enumerate(row):
                 if curr_cell.exist:
@@ -88,70 +87,144 @@ class Tile_map:
                     w = self.get_cell(x-1, y)
                     s = self.get_cell(x, y+1)
 
-                    # North cell
+                    ne = self.get_cell(x+1, y-1)
+                    nw = self.get_cell(x-1, y-1)
+                    sw = self.get_cell(x-1, y+1)
+
+                    w2 = self.get_cell(x-2, y)
+
+                    world_x = x * Config.TILE_SIZE
+                    world_y = y * Config.TILE_SIZE
+
+                    # North wall
                     if n != None and not n.exist:
-                        curr_cell.has_wall[NORTH] = True
-                        if w != None and w.has_wall[NORTH]:
-                            i = w.wall_i[NORTH]
-                            curr_cell.wall_i[NORTH] = i
-                            self.walls[i].start_pos[0] += Config.TILE_SIZE
-                        else:
-                            curr_cell.wall_i[NORTH] = len(self.walls)
-                            start_x = x*Config.TILE_SIZE 
-                            start_y = y*Config.TILE_SIZE
-                            self.walls.append(Wall((start_x + Config.TILE_SIZE, start_y), (start_x, start_y)))
+                        if not curr_cell.has_wall[NORTH]:
+                            curr_cell.has_wall[NORTH] = True
+                            if w != None and w.has_wall[NORTH]:
+                                #  __ __
+                                # |__|__| <--
+                                #
+                                i = w.wall_i[NORTH]
+                                curr_cell.wall_i[NORTH] = i
+                                self.walls[i].end_pos[0] += Config.TILE_SIZE
+                            else:
+                                if nw != None and nw.has_wall[SOUTH]:
+                                #  __    
+                                # |__|__
+                                #    |__| <--
+                                #    
+                                    additional_points.append((world_x, world_y))
+                                    i = nw.wall_i[SOUTH]
+                                    curr_cell.wall_i[NORTH] = i
+                                    self.walls[i].end_pos[0] += Config.TILE_SIZE
+                                elif ne != None and ne.has_wall[SOUTH]:
+                                #     __    
+                                #  __|__|
+                                # |__| <--
+                                #    
+                                    additional_points.append((world_x + Config.TILE_SIZE, world_y))
+                                    i = ne.wall_i[SOUTH]
+                                    curr_cell.wall_i[NORTH] = i
+                                    self.walls[i].start_pos[0] -= Config.TILE_SIZE
+                                else:
+                                    curr_cell.wall_i[NORTH] = len(self.walls)
+                                    start_x = x*Config.TILE_SIZE 
+                                    start_y = y*Config.TILE_SIZE
+                                    self.walls.append(Wall((start_x, start_y), (start_x + Config.TILE_SIZE, start_y)))
                         
-                    # East cell
+                    # East wall
                     if e != None and not e.exist:
                         curr_cell.has_wall[EAST] = True
                         if n != None and n.has_wall[EAST]:
+                                #  __    
+                                # |__|
+                                # |__| <--
+                                # 
                             i = n.wall_i[EAST]
                             curr_cell.wall_i[EAST] = i
-                            self.walls[i].start_pos[1] += Config.TILE_SIZE
+                            self.walls[i].end_pos[1] += Config.TILE_SIZE
                         else:
-                            curr_cell.wall_i[EAST] = len(self.walls)
-                            start_x = (x + 1)*Config.TILE_SIZE 
-                            start_y = y*Config.TILE_SIZE
-                            self.walls.append(Wall((start_x, start_y + Config.TILE_SIZE), (start_x, start_y)))
+                            if ne != None and ne.has_wall[WEST]:
+                                #     __    
+                                #  __|__|
+                                # |__| <--
+                                # 
+                                additional_points.append((world_x + Config.TILE_SIZE, world_y))
+                                i = ne.wall_i[WEST]
+                                curr_cell.wall_i[EAST] = i
+                                self.walls[i].end_pos[1] += Config.TILE_SIZE
+                            else:
+                                curr_cell.wall_i[EAST] = len(self.walls)
+                                start_x = (x + 1)*Config.TILE_SIZE 
+                                start_y = y*Config.TILE_SIZE
+                                self.walls.append(Wall((start_x, start_y), (start_x, start_y + Config.TILE_SIZE)))
 
-                    # West cell
+                    # West wall
                     if w != None and not w.exist:
                         curr_cell.has_wall[WEST] = True
                         if n != None and n.has_wall[WEST]:
+                                #  __    
+                                # |__|
+                                # |__| <--
+                                # 
                             i = n.wall_i[WEST]
                             curr_cell.wall_i[WEST] = i
                             self.walls[i].end_pos[1] += Config.TILE_SIZE
                         else:
-                            curr_cell.wall_i[WEST] = len(self.walls)
-                            start_x = x*Config.TILE_SIZE 
-                            start_y = y*Config.TILE_SIZE
-                            self.walls.append(Wall((start_x, start_y), (start_x, start_y + Config.TILE_SIZE)))
+                            if nw != None and nw.has_wall[EAST]:
+                                #  __    
+                                # |__|__
+                                #    |__| <--
+                                # 
+                                additional_points.append((world_x, world_y))
+                                i = nw.wall_i[EAST]
+                                curr_cell.wall_i[WEST] = i
+                                self.walls[i].end_pos[1] += Config.TILE_SIZE
+                            else:
+                                curr_cell.wall_i[WEST] = len(self.walls)
+                                start_x = x*Config.TILE_SIZE 
+                                start_y = y*Config.TILE_SIZE
+                                self.walls.append(Wall((start_x, start_y), (start_x, start_y + Config.TILE_SIZE)))
 
                     # South cell
                     if s != None and not s.exist:
                         curr_cell.has_wall[SOUTH] = True
                         if w != None and w.has_wall[SOUTH]:
+                                #  __ __
+                                # |__|__| <--
+                                #  
                             i = w.wall_i[SOUTH]
                             curr_cell.wall_i[SOUTH] = i
                             self.walls[i].end_pos[0] += Config.TILE_SIZE
                         else:
-                            curr_cell.wall_i[SOUTH] = len(self.walls)
-                            start_x = x*Config.TILE_SIZE
-                            start_y = (y+1)*Config.TILE_SIZE
-                            self.walls.append(Wall((start_x, start_y), (start_x + Config.TILE_SIZE, start_y)))
+                            if w2 != None and w2.has_wall[SOUTH] and sw != None and sw.exist:
+                                #  __    __
+                                # |__|__|__| <--
+                                #    |__|
+                                additional_points.append((world_x - 2*Config.TILE_SIZE, world_y + Config.TILE_SIZE))
+                                additional_points.append((world_x - Config.TILE_SIZE, world_y + Config.TILE_SIZE))
+                                i = w2.wall_i[SOUTH]
+                                sw.has_wall[NORTH] = True
+                                curr_cell.wall_i[SOUTH] = sw.wall_i[NORTH] = i
+                                self.walls[i].end_pos[0] += 2 * Config.TILE_SIZE
+                            else:
+                                curr_cell.wall_i[SOUTH] = len(self.walls)
+                                start_x = x*Config.TILE_SIZE
+                                start_y = (y+1)*Config.TILE_SIZE
+                                self.walls.append(Wall((start_x, start_y), (start_x + Config.TILE_SIZE, start_y)))
 
         # formating gathered wall data to generate self.points data structure
         for wall in self.walls:
             end_pos = tuple(wall.end_pos)
             start_pos = tuple(wall.start_pos)
-            if start_pos not in self.points:
-                self.points[start_pos] = Point(wall_start = wall)
-            else:
-                self.points[start_pos].wall_start = wall
-            if end_pos not in self.points:
-                self.points[end_pos] = Point(wall_end = wall)
-            else:
-                self.points[end_pos].wall_end = wall
+            for pos in (end_pos, start_pos):
+                if pos in self.points:
+                    self.points[pos].walls.append(wall)
+                else:
+                    self.points[pos] = Point(wall)
+        for pos in additional_points:
+            if pos not in self.points:
+                self.points[pos] = Point()
 
 
     def update_variables(self, mouse_pos, mouse_pressed, light_object):
@@ -169,9 +242,3 @@ class Tile_map:
         for wall in self.walls:
             pygame.draw.line(surface, (150,150,150), wall.start_pos, wall.end_pos , 3)
         surface.blit(self.text, (0,0))
-            
-                
-
-
-
-

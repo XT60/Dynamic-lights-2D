@@ -15,7 +15,14 @@ def signum(x):
 
 def clamp(x_val, min_val, max_val):
     return max(min_val, min(max_val, x_val))
-        
+
+
+def are_in_set(args:list, set_instance:set):
+    for arg in args:
+        if arg not in set_instance:
+            return False
+    return True
+
 
 def light_intersection(light_source, light_vec, wall_vec, wall_anchor):
     '''finds intersection point between light and wall'''
@@ -74,11 +81,11 @@ class light_handling:
         self.polygon.clear()
 
         # sorting points by angle relative to current mouse position
-        sorted_points = [ point for point in self.points]
+        sorted_points = [point for point in self.points]
         sort_by_angle(sorted_points, self.mouse_pos)
 
         curr_walls = set()
-        top_wall = None
+        top_wall = [None, None]     # candidates for real topmost wall
 
         # finds walls that should be in curr_walls at start
         start_vec = (1, 0)
@@ -90,7 +97,7 @@ class light_handling:
 
         # finds first intersection point
         min_dist, closest_point, closest_wall = intersect_walls(curr_walls, start_vec, self.mouse_pos)
-        top_wall = closest_wall
+        top_wall[0] = closest_wall
         self.polygon.append(closest_point)
 
         for vertex in sorted_points:
@@ -98,7 +105,7 @@ class light_handling:
             new_buffer = set()                  # set of walls added in current iteration
             rm_buffer = set()                   # set of walls that will be removed in next iteration
 
-            for wall in (point.wall_end, point.wall_start):
+            for wall in point.walls:
                 if wall:
                     if wall in curr_walls:
                         curr_walls.remove(wall)
@@ -116,23 +123,46 @@ class light_handling:
             min_dist['rm'], closest_point['rm'], closest_wall['rm'] = intersect_walls(rm_buffer, light_vec, self.mouse_pos)              
             
             k = min([min_dist[key] for key in min_dist])
-            
-            if is_equal(k, min_dist['rm']) :   
-                self.polygon.append(closest_point['rm'])
-                if closest_point['curr'] != None and point.wall_end in rm_buffer and point.wall_start in rm_buffer:
-                    self.polygon.append(closest_point['curr'])
-                top_wall = closest_wall['rm']
 
-            elif is_equal(k, min_dist['new']):
-                if closest_point['curr'] != None and point.wall_end in new_buffer and point.wall_start in new_buffer:
+            if is_equal(k, min_dist['new']):
+                if closest_point['curr'] != None and are_in_set(point.walls, new_buffer):
                     self.polygon.append(closest_point['curr'])
                 self.polygon.append(closest_point['new'])
-                top_wall = closest_wall['new']
+                top_wall[1] = None
+                if are_points_equal(closest_point['new'], vertex):
+                    # when closest point is on vertex and both walls are good candidates for top_wall
+                    i = 0
+                    for wall in point.walls:
+                        if wall in new_buffer:
+                            top_wall[i] = wall
+                            i += 1
+                else:
+                    top_wall[0] = closest_wall['new']       
+
+            elif is_equal(k, min_dist['rm']) :   
+                self.polygon.append(closest_point['rm'])
+                if closest_point['curr'] != None and are_in_set(point.walls, rm_buffer):
+                    self.polygon.append(closest_point['curr'])
+                if are_points_equal(closest_point['rm'], vertex):
+                    # when closest point is on vertex and we don't know which wall to set as top_wall
+                    for wall in point.walls:
+                        if wall in new_buffer:
+                            top_wall[0] = wall
+                else:
+                    top_wall[0] = closest_wall['rm']
+                top_wall[1] = None
 
             elif is_equal(k, min_dist['curr']):
-                if top_wall != closest_wall['curr']:
+                if len(point.walls) == 0 and are_points_equal(vertex, closest_point['curr']):
                     self.polygon.append(closest_point['curr'])
-                    top_wall = closest_wall['curr']
+                else:
+                    if top_wall[0] != closest_wall['curr']:
+                        if top_wall[1] == closest_wall['curr']:
+                            top_wall[1] = top_wall[0]
+                        else:
+                            self.polygon.append(closest_point['curr'])
+                            top_wall[0] = closest_wall['curr']
+                        top_wall[1] = None
             
             curr_walls.update(new_buffer)
             curr_walls -= rm_buffer
