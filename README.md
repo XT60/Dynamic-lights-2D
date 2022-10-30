@@ -62,6 +62,3 @@ So in short:
 
 ## 🗺️ Feedback
 If you have happen to have any feedback about the project please reach out to me. 
-<p align="center">
-  <img src="https://user-images.githubusercontent.com/89086129/196006461-f1bf3621-44d8-4a37-87c0-2f2e78f4012d.png" alt="errorImg">
-</p>
