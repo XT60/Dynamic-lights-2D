@@ -54,13 +54,12 @@ Python is not the first language that comes to mind when thinking about performa
 
 
 ## 🛠️ How is it different from classic solution?
-Well, firstly, what I was trying to accomplish was to cast as little rays and create a polygon with as little vertices as possible. So at the begining of the main polygon-exctracting function I sort all the points by an angle relative to the current mouse position. In the v1 version I changed it a little by not directly calculating angles with the trigonometric functions and instead using the matrix determinant to determine the points's order. After sorting I calculate how many walls intersect with the light ray at the relative 0 angle, so that while iterating through points I can keep walls that currently can be intersected by light ray and not applying the line intersection algorithm to every wall. Also while iterating I keep a top_wall value that represents wall that was the closeest in latest itertion, this way I can reduce amout of points to minimum by placing exactly 2 (start and end of section) points on every wall that appears in the solution except the first wall in the sollution. 
-So inn short:
+Well, firstly, what I was trying to accomplish was to cast as little rays and create a polygon with as little vertices as possible. So at the beginning of the main polygon-extracting function I sort all the points by an angle relative to the current mouse position. In the v1 version I changed it a little by not directly calculating angles with the trigonometric functions and instead using the matrix determinant to determine the point's order. After sorting I calculate how many walls intersect with the light ray at the relative 0 angle, so that while iterating through points I can keep walls that currently can be intersected by the light ray and not applying the line intersection algorithm to every wall. Also, while iterating I keep a top_wall value that represents wall that was the closest in latest iteration, this way I can reduce amount of points to minimum by placing exactly 2 (start and end of section) points on every wall that appears in the solution except the first wall in the solution.
+So in short:
 - sorting points by angle (retrieved by matrix determinant)
 - iterating through sorted points and for each casting a ray
 - not checking walls that will surely not intersect with the light ray
 - minimising amount of vertices that solution contains of
-For more insight I recomment checking my code yourself :)
 
 
 ### 🚩 Problems
