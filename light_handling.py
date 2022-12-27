@@ -6,11 +6,7 @@ from compare_operators import *
 import vector_arithmetic as va
 
 def signum(x):
-    if x > 0:
-        return 1
-    if x < 0:
-        return -1
-    return 0
+    return (x > 0) - (x < 0)
 
 
 def clamp(x_val, min_val, max_val):
@@ -178,11 +174,11 @@ class light_handling:
         
 
     def draw(self, surface: pygame.Surface):
-        if self.mouse_pos != None:
-            new_surface = pygame.Surface(Config.WINDOW_SIZE)
-            new_surface.fill((0,0,0))
-            if self.mouse_pos != None:
-                pygame.draw.polygon(new_surface, (0,255,0), self.polygon)
-            new_surface.set_colorkey((0,255,0))
-            surface.blit(self.light_effect, (self.mouse_pos[0] - self.effect_size[0]/2, self.mouse_pos[1] - self.effect_size[1]/2))
-            surface.blit(new_surface, (0,0))
+        if not self.mouse_pos:
+            return
+        new_surface = pygame.Surface(Config.WINDOW_SIZE)
+        new_surface.fill((0,0,0))
+        pygame.draw.polygon(new_surface, (0,255,0), self.polygon)
+        new_surface.set_colorkey((0,255,0))
+        surface.blit(self.light_effect, (self.mouse_pos[0] - self.effect_size[0]/2, self.mouse_pos[1] - self.effect_size[1]/2))
+        surface.blit(new_surface, (0,0))
